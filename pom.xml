@@ -6,7 +6,7 @@
     <groupId>com.losK</groupId>
     <artifactId>Planner</artifactId>
     <packaging>war</packaging>
-    <version>1.0.5</version>
+    <version>1.0.2.RELEASE</version>
     <name>Planner</name>
 
     <description>Project for Cognified</description>
