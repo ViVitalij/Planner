@@ -38,10 +38,10 @@ public class Meeting extends BasicEvent {
 
     private String roomName;
 
-    @Convert(converter = BooleanConverter.class)
-    private Boolean isAllDay;
-
-    private String styleName;
+//    @Convert(converter = BooleanConverter.class)
+//    private Boolean isAllDay;
+//
+//    private String styleName;
 
     public Meeting() {
     }
@@ -61,16 +61,16 @@ public class Meeting extends BasicEvent {
         this.roomName = roomName;
     }
 
-    public Meeting(String caption, String description, Date startDate,
-                   Date meetingEndDate, String roomName, Boolean isAllDay, String styleName) {
-        this.caption = caption;
-        this.description = description;
-        this.startDate = startDate;
-        this.meetingEndDate = meetingEndDate;
-        this.roomName = roomName;
-        this.isAllDay = isAllDay;
-        this.styleName = styleName;
-    }
+//    public Meeting(String caption, String description, Date startDate,
+//                   Date meetingEndDate, String roomName, Boolean isAllDay, String styleName) {
+//        this.caption = caption;
+//        this.description = description;
+//        this.startDate = startDate;
+//        this.meetingEndDate = meetingEndDate;
+//        this.roomName = roomName;
+//        this.isAllDay = isAllDay;
+//        this.styleName = styleName;
+//    }
 
     @Override
     public void setCaption(String meetingName) {
@@ -92,15 +92,15 @@ public class Meeting extends BasicEvent {
         this.startDate = meetingStartDate;
     }
 
-    @Override
-    public void setStyleName(String styleName) {
-        this.styleName = styleName;
-    }
-
-    @Override
-    public void setAllDay(boolean isAllDay) {
-        this.isAllDay = isAllDay;
-    }
+//    @Override
+//    public void setStyleName(String styleName) {
+//        this.styleName = styleName;
+//    }
+//
+//    @Override
+//    public void setAllDay(boolean isAllDay) {
+//        this.isAllDay = isAllDay;
+//    }
 
     @Override
     public Date getStart() {
@@ -122,10 +122,10 @@ public class Meeting extends BasicEvent {
         return description;
     }
 
-    @Override
-    public String getStyleName() {
-        return styleName;
-    }
+//    @Override
+//    public String getStyleName() {
+//        return styleName;
+//    }
 
     @Override
     public boolean isAllDay() {

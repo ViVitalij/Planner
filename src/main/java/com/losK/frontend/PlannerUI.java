@@ -243,15 +243,12 @@ public class PlannerUI extends UI {
 //        Date firstEventEnd = DateUtils.addMinutes(firstEventStart, 5);
 //        BasicEvent firstEvent = new BasicEvent("Interview", "My interview",
 //                firstEventStart, firstEventEnd);
-        List<Meeting> all = repository.findAll();
-        calendar.addEvent(all.get(0));
+        List<Meeting> meetingsList = repository.findAll();
+        calendar.addEvent(meetingsList.get(0));
 
-        Date secondEventStart = DateUtils.addDays(now, 6);
-        Date secondEventEnd = DateUtils.addDays(secondEventStart, 4);
-        BasicEvent secondEvent = new BasicEvent("Sepia Ensemble Project", "Rehearsals",
-                secondEventStart, secondEventEnd);
-        secondEvent.setAllDay(true);
-        calendar.addEvent(secondEvent);
+        Meeting rehearsal = meetingsList.get(1);
+//        rehearsal.setAllDay(true);
+        calendar.addEvent(rehearsal);
     }
 
     private List<Integer> initialMeetingDurationList() {
@@ -265,7 +262,7 @@ public class PlannerUI extends UI {
             String meetingName = meetingNameField.getValue();
             String meetingDescription = meetingDescriptionArea.getValue();
             Date meetingStartDate = meetingStartDateField.getValue();
-            DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa");
+//            DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa");
             String meetingRoom = (String) roomChoiceBox.getValue();
             Integer meetingDuration = (Integer) meetingDurationNativeSelect.getValue();
             Date meetingEndDate = DateUtils.addMinutes(meetingStartDate, meetingDuration);
@@ -278,7 +275,7 @@ public class PlannerUI extends UI {
                 validation.isRoomFree(meetingRoom, meetingStartDate, meetingDuration, userDateEvents);
                 createBasicCalendarEvent();
                 lastMeetingList.save(new Meeting(meetingName, meetingDescription,
-                        meetingStartDate, meetingEndDate, meetingRoom, false, "mytheme"));
+                        meetingStartDate, meetingEndDate, meetingRoom));
                 meetingNameField.clear();
                 meetingDescriptionArea.clear();
                 meetingNameField.focus();
