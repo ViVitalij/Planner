@@ -13,10 +13,8 @@ import java.util.Date;
 @Converter
 public class DateConverter implements AttributeConverter<Date, String> {
 
-
     @Override
     public String convertToDatabaseColumn(Date date) {
-
         DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa");
         return dateFormat.format(date);
     }

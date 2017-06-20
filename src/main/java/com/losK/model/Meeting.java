@@ -2,6 +2,7 @@ package com.losK.model;
 
 import com.losK.backend.BooleanConverter;
 import com.losK.backend.DateConverter;
+import com.vaadin.ui.components.calendar.event.BasicEvent;
 import com.vaadin.ui.components.calendar.event.EditableCalendarEvent;
 
 import javax.persistence.*;
@@ -13,29 +14,33 @@ import java.util.Date;
 /**
  * Created by m.losK on 2017-04-23.
  */
-@Entity
-public class Meeting implements EditableCalendarEvent, Serializable {
 
-    private static final long serialVersionUID = 1L;
+@Entity
+public class Meeting extends BasicEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private Long id;
 
     @NotNull(message = "Name is required")
     @Size(min = 3, max = 50, message = "At least 3 characters (max.50)")
     private String caption;
+
     private String description;
+
     //    @Temporal(TemporalType.TIMESTAMP)
     @Convert(converter = DateConverter.class)
     private Date startDate;
+
     //    @Temporal(TemporalType.TIMESTAMP)
     @Convert(converter = DateConverter.class)
     private Date meetingEndDate;
+
     private String roomName;
 
     @Convert(converter = BooleanConverter.class)
     private Boolean isAllDay;
+
     private String styleName;
 
     public Meeting() {
@@ -133,5 +138,19 @@ public class Meeting implements EditableCalendarEvent, Serializable {
 
     public String getRoomName() {
         return roomName;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        return "Meeting{" +
+                "caption='" + caption + '\'' +
+                ", description='" + description + '\'' +
+                ", startDate=" + startDate +
+                ", meetingEndDate=" + meetingEndDate +
+                '}';
     }
 }

@@ -21,8 +21,7 @@ import java.util.List;
 public class MeetingList extends VerticalLayout implements MeetingChangeListener {
 
     @Autowired
-    MeetingRepository repository;
-    private List<Meeting> meetings;
+    private MeetingRepository repository;
 
     @PostConstruct
     void init() {
@@ -35,7 +34,6 @@ public class MeetingList extends VerticalLayout implements MeetingChangeListener
     }
 
     private void setMeetingList(List<Meeting> meetings) {
-        this.meetings = meetings;
         removeAllComponents();
         meetings.forEach(event -> {
             addComponent(new LastEventLayout(event, this));
@@ -45,7 +43,8 @@ public class MeetingList extends VerticalLayout implements MeetingChangeListener
     public void save(Meeting meeting) {
         try {
             repository.save(meeting);
-        } catch (ConstraintViolationException exception) {
+        } catch (ConstraintViolationException e) {
+            e.printStackTrace();
             Notification.show("At least 3 characters (max.50)", Notification.Type.ERROR_MESSAGE);
         }
         update();

@@ -2,6 +2,7 @@ package com.losK.frontend;
 
 import com.losK.backend.MeetingList;
 import com.losK.model.Meeting;
+import com.losK.repository.MeetingRepository;
 import com.losK.validation.Validation;
 import com.vaadin.annotations.Theme;
 import com.vaadin.event.ShortcutAction;
@@ -15,6 +16,7 @@ import com.vaadin.ui.components.calendar.event.CalendarEvent;
 import com.vaadin.ui.themes.ValoTheme;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -25,46 +27,61 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * This UI is the application entry point. A UI may either represent a browser window
- * (or tab) or some part of a html page where a Vaadin application is embedded.
- * <p>
- * The UI is initialized using {@link #init(VaadinRequest)}. This method is intended to be
- * overridden to save component to the user interface and initialize non-component functionality.
- */
 @SpringUI
 @Theme("mytheme")
 public class PlannerUI extends UI {
 
-    private VerticalLayout root;
-    private HorizontalLayout centralLayout;
-    private HorizontalLayout durationLayout;
-
     @Autowired
-    MeetingList lastMeetingList;
+    private MeetingList lastMeetingList;
+
+    private VerticalLayout root;
+
+    private HorizontalLayout centralLayout;
 
     private Calendar calendar;
+
     private TextField meetingNameField;
+
     private TextArea meetingDescriptionArea;
+
     private DateField meetingStartDateField;
-    private Button addMeetingButton;
-    private NativeSelect meetingDurationSelect;
+
+    private NativeSelect meetingDurationNativeSelect;
+
     private ComboBox roomChoiceBox;
-    private Label addEventHeader;
-    private Label lastMeetingHeader;
+
+    private Label addingEventHeader;
+
     private Label durationLabel;
+
+    private Button addingMeetingButton;
+
+    private Button dayButton;
+
+    private Button weekButton;
+
+    private Button monthButton;
+
+    private Date now = new Date();
+
+    MeetingRepository repository;
+
+    @Autowired
+    public PlannerUI(MeetingRepository repository) {
+        this.repository = repository;
+//        this.calendar = new Calendar<>(Meeting.class);
+    }
 
     @Override
     protected void init(VaadinRequest request) {
         this.setLocale(Locale.US);
         setRootLayout();
-        addViewButtons();
+        addChangingCalendarViewButtons();
         setCenterLayout();
         addCalendar();
-        setAddMeetingLayout();
+        setAddingMeetingLayout();
         addLastMeetingList();
         addDummyEvents();
-
     }
 
     private void setRootLayout() {
@@ -73,29 +90,38 @@ public class PlannerUI extends UI {
         setContent(root);
     }
 
-    private void addViewButtons() {
-        HorizontalLayout viewButtonLayout = new HorizontalLayout();
-        viewButtonLayout.setSpacing(true);
-        Date startDate = new Date();
-        Button buttonDay = new Button("Day view");
-        buttonDay.addClickListener(click -> {
-            calendar.setStartDate(startDate);
-            calendar.setEndDate(DateUtils.addMinutes(startDate, 15));
-//            calendar.autoScaleVisibleHoursOfDay();
-        });
-        Button buttonWeek = new Button("Week view");
-        buttonWeek.addClickListener(click -> {
-            calendar.setStartDate(startDate);
-            calendar.setEndDate(DateUtils.addWeeks(startDate, 1));
-        });
-        Button buttonMonth = new Button("Month view");
-        buttonMonth.addClickListener(click -> {
-            calendar.setStartDate(startDate);
-            calendar.setEndDate(DateUtils.addMonths(startDate, 1));
-        });
+    private void addChangingCalendarViewButtons() {
+        HorizontalLayout calendarViewButtonLayout = new HorizontalLayout();
+        calendarViewButtonLayout.setSpacing(true);
+        setDayButton();
+        setWeekButton();
+        setMonthButton();
+        calendarViewButtonLayout.addComponents(dayButton, weekButton, monthButton);
+        root.addComponent(calendarViewButtonLayout);
+    }
 
-        viewButtonLayout.addComponents(buttonDay, buttonWeek, buttonMonth);
-        root.addComponent(viewButtonLayout);
+    private void setMonthButton() {
+        monthButton = new Button("Month view");
+        monthButton.addClickListener(click -> {
+            calendar.setStartDate(now);
+            calendar.setEndDate(DateUtils.addMonths(now, 1));
+        });
+    }
+
+    private void setWeekButton() {
+        weekButton = new Button("Week view");
+        weekButton.addClickListener(click -> {
+            calendar.setStartDate(now);
+            calendar.setEndDate(DateUtils.addWeeks(now, 1));
+        });
+    }
+
+    private void setDayButton() {
+        dayButton = new Button("Day view");
+        dayButton.addClickListener(click -> {
+            calendar.setStartDate(now);
+            calendar.setEndDate(DateUtils.addMinutes(now, 15));
+        });
     }
 
     private void setCenterLayout() {
@@ -105,96 +131,126 @@ public class PlannerUI extends UI {
     }
 
     private void addCalendar() {
-        calendar = new Calendar("My Planner");
-        calendar.setWidth("750px");
-        calendar.setHeight("500px");
-        Date startDate = new Date();
-        calendar.setStartDate(startDate);
-        calendar.setEndDate(DateUtils.addMonths(startDate, 1));
+        setCalendar();
         centralLayout.addComponent(calendar);
     }
 
-    private void setAddMeetingLayout() {
+    private void setCalendar() {
+        calendar = new Calendar("My meeting planner");
+        calendar.setWidth("750px");
+        calendar.setHeight("500px");
+        calendar.setStartDate(now);
+        calendar.setEndDate(DateUtils.addMonths(now, 1));
+    }
+
+    private void setAddingMeetingLayout() {
         VerticalLayout meetingLayout = new VerticalLayout();
         meetingLayout.setSpacing(true);
         meetingLayout.setMargin(true);
 
-        addEventHeader = new Label("Add a meeting");
-        addEventHeader.setSizeUndefined();
-        addEventHeader.addStyleName(ValoTheme.LABEL_H2);
+        setHeader();
+        setMeetingNameField();
+        setRoomChoiceBox();
+        setMeetingStartDateField();
 
-        meetingNameField = new TextField();
-        meetingNameField.focus();
-        meetingNameField.setInputPrompt("Name");
-        meetingNameField.setRequired(true);
+        HorizontalLayout durationLayout = new HorizontalLayout();
+        setMeetingDurationNativeSelect();
+        setDurationLabel();
+        durationLayout.addComponents(meetingDurationNativeSelect, durationLabel);
+        durationLayout.setComponentAlignment(durationLabel, Alignment.BOTTOM_LEFT);
 
+        setMeetingDescriptionArea();
+        setAddingMeetingButton();
+        setAddingMeetingButtonOnAction();
+
+        meetingLayout.addComponents(addingEventHeader, meetingNameField, roomChoiceBox,
+                meetingStartDateField, durationLayout,
+                meetingDescriptionArea, addingMeetingButton);
+
+        centralLayout.addComponent(meetingLayout);
+    }
+
+    private void setAddingMeetingButton() {
+        addingMeetingButton = new Button("Add");
+        addingMeetingButton.addStyleName(ValoTheme.BUTTON_PRIMARY);
+        addingMeetingButton.setIcon(FontAwesome.PLUS);
+    }
+
+    private void setDurationLabel() {
+        durationLabel = new Label("min");
+    }
+
+    private void setMeetingDescriptionArea() {
+        meetingDescriptionArea = new TextArea();
+        meetingDescriptionArea.setInputPrompt("Description");
+    }
+
+    private void setMeetingDurationNativeSelect() {
+        meetingDurationNativeSelect = new NativeSelect();
+        meetingDurationNativeSelect.setCaption("Duration:");
+        meetingDurationNativeSelect.setNullSelectionAllowed(false);
+        meetingDurationNativeSelect.setRequired(true);
+        List<Integer> meetingDurationList = initialMeetingDurationList();
+        meetingDurationNativeSelect.addItems(meetingDurationList);
+        meetingDurationNativeSelect.setValue(meetingDurationList.iterator().next());
+        meetingDurationNativeSelect.setTabIndex(5);
+    }
+
+    private void setMeetingStartDateField() {
+        meetingStartDateField = new DateField("Start date:");
+        Date startMeetingDate = DateUtils.addDays(now, 11);
+        meetingStartDateField.setRangeStart(startMeetingDate);
+        meetingStartDateField.setRangeEnd
+                (new GregorianCalendar(2018, 12, 31, 17, 00, 00)
+                        .getTime());
+        meetingStartDateField.setValue(startMeetingDate);
+        meetingStartDateField.setDateFormat("dd/MM/yyyy hh:mm aa");
+        meetingStartDateField.setResolution(Resolution.MINUTE);
+        meetingStartDateField.setRequired(true);
+    }
+
+    private void setRoomChoiceBox() {
         roomChoiceBox = new ComboBox();
         roomChoiceBox.setInputPrompt("Select room");
         roomChoiceBox.addItems("Red", "Green", "Blue");
         roomChoiceBox.setNullSelectionAllowed(false);
         roomChoiceBox.setTextInputAllowed(false);
         roomChoiceBox.setRequired(true);
+    }
 
+    private void setMeetingNameField() {
+        meetingNameField = new TextField();
+        meetingNameField.focus();
+        meetingNameField.setInputPrompt("Name");
+        meetingNameField.setRequired(true);
+    }
 
-        meetingStartDateField = new DateField("Start date:");
-        Date startMeetingDate = DateUtils.addDays(new Date(), 11);
-        meetingStartDateField.setRangeStart(startMeetingDate);
-        meetingStartDateField.setRangeEnd
-                (new GregorianCalendar(2018, 12, 31, 17, 00, 00).getTime());
-        meetingStartDateField.setValue(startMeetingDate);
-        meetingStartDateField.setDateFormat("dd/MM/yyyy hh:mm aa");
-        meetingStartDateField.setResolution(Resolution.MINUTE);
-        meetingStartDateField.setRequired(true);
-
-        durationLayout = new HorizontalLayout();
-        meetingDurationSelect = new NativeSelect();
-        meetingDurationSelect.setCaption("Duration:");
-        meetingDurationSelect.setNullSelectionAllowed(false);
-        meetingDurationSelect.setRequired(true);
-        List<Integer> meetingDurationList = initialMeetingDurationList();
-        meetingDurationSelect.addItems(meetingDurationList);
-        meetingDurationSelect.setValue(meetingDurationList.iterator().next());
-        meetingDurationSelect.setTabIndex(5);
-        durationLabel = new Label("min");
-        durationLayout.addComponents(meetingDurationSelect, durationLabel);
-        durationLayout.setComponentAlignment(durationLabel, Alignment.BOTTOM_LEFT);
-
-        meetingDescriptionArea = new TextArea();
-        meetingDescriptionArea.setInputPrompt("Description");
-
-        addMeetingButton = new Button("Add");
-        addMeetingButton.addStyleName(ValoTheme.BUTTON_PRIMARY);
-        addMeetingButton.setIcon(FontAwesome.PLUS);
-        addEventButtonOnAction();
-
-        meetingLayout.addComponents(addEventHeader, meetingNameField, roomChoiceBox,
-                meetingStartDateField, durationLayout,
-                meetingDescriptionArea, addMeetingButton);
-
-        centralLayout.addComponent(meetingLayout);
+    private void setHeader() {
+        addingEventHeader = new Label("Add a meeting");
+        addingEventHeader.setSizeUndefined();
+        addingEventHeader.addStyleName(ValoTheme.LABEL_H2);
     }
 
     private void addLastMeetingList() {
-        lastMeetingHeader = new Label("Recently added meetings to the database:");
+        Label lastMeetingHeader = new Label("Recently added meetings to the database:");
         lastMeetingHeader.addStyleName(ValoTheme.LABEL_COLORED);
         lastMeetingHeader.addStyleName(ValoTheme.LABEL_H2);
         root.addComponents(lastMeetingHeader, lastMeetingList);
     }
 
     private void addDummyEvents() {
-        Date thisMoment = new Date();
-        Date firstEventStart = DateUtils.addMinutes(thisMoment, 15);
-        Date firstEventEnd = DateUtils.addMinutes(firstEventStart, 5);
-        BasicEvent firstEvent = new BasicEvent("Sepia Ensemble", "Rehearsal",
-                firstEventStart, firstEventEnd);
-        calendar.addEvent(firstEvent);
+//        Date firstEventStart = DateUtils.addMinutes(now, 15);
+//        Date firstEventEnd = DateUtils.addMinutes(firstEventStart, 5);
+//        BasicEvent firstEvent = new BasicEvent("Interview", "My interview",
+//                firstEventStart, firstEventEnd);
+        List<Meeting> all = repository.findAll();
+        calendar.addEvent(all.get(0));
 
-        Date secondEventStart = DateUtils.addDays(thisMoment, 6);
+        Date secondEventStart = DateUtils.addDays(now, 6);
         Date secondEventEnd = DateUtils.addDays(secondEventStart, 4);
-        BasicEvent secondEvent = new BasicEvent("Cognifide", "Cognifide interview",
+        BasicEvent secondEvent = new BasicEvent("Sepia Ensemble Project", "Rehearsals",
                 secondEventStart, secondEventEnd);
         secondEvent.setAllDay(true);
-        //TODO skasowac albo naprawic
         calendar.addEvent(secondEvent);
     }
 
@@ -203,15 +259,15 @@ public class PlannerUI extends UI {
                 .boxed().collect(Collectors.toList());
     }
 
-    private void addEventButtonOnAction() {
-        addMeetingButton.addClickListener(click -> {
+    private void setAddingMeetingButtonOnAction() {
+        addingMeetingButton.addClickListener(click -> {
             Validation validation = new Validation();
             String meetingName = meetingNameField.getValue();
             String meetingDescription = meetingDescriptionArea.getValue();
             Date meetingStartDate = meetingStartDateField.getValue();
             DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa");
             String meetingRoom = (String) roomChoiceBox.getValue();
-            Integer meetingDuration = (Integer) meetingDurationSelect.getValue();
+            Integer meetingDuration = (Integer) meetingDurationNativeSelect.getValue();
             Date meetingEndDate = DateUtils.addMinutes(meetingStartDate, meetingDuration);
 
             if (validation.validateMeetingName(meetingNameField) && validation.validateMeetingRoom(roomChoiceBox)) {
@@ -232,13 +288,13 @@ public class PlannerUI extends UI {
         });
 
         meetingNameField.focus();
-        addMeetingButton.setClickShortcut(ShortcutAction.KeyCode.ENTER);
+        addingMeetingButton.setClickShortcut(ShortcutAction.KeyCode.ENTER);
     }
 
     private void createBasicCalendarEvent() {
         BasicEvent test = new BasicEvent(meetingNameField.getValue(), meetingDescriptionArea.getValue(),
                 meetingStartDateField.getValue(), DateUtils.addMinutes(meetingStartDateField.getValue(),
-                (Integer) meetingDurationSelect.getValue()));
+                (Integer) meetingDurationNativeSelect.getValue()));
         calendar.addEvent(test);
     }
 }
