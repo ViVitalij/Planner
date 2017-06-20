@@ -1,8 +1,8 @@
-package com.losK.frontend;
+package com.losK.view;
 
-import com.losK.backend.MeetingList;
 import com.losK.model.Meeting;
 import com.losK.repository.MeetingRepository;
+import com.losK.service.MeetingList;
 import com.losK.validation.Validation;
 import com.vaadin.annotations.Theme;
 import com.vaadin.event.ShortcutAction;
@@ -12,14 +12,10 @@ import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.components.calendar.event.BasicEvent;
-import com.vaadin.ui.components.calendar.event.CalendarEvent;
 import com.vaadin.ui.themes.ValoTheme;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -28,11 +24,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @SpringUI
-@Theme("mytheme")
+@Theme("valo")
 public class PlannerUI extends UI {
-
-    @Autowired
-    private MeetingList lastMeetingList;
 
     private VerticalLayout root;
 
@@ -62,14 +55,16 @@ public class PlannerUI extends UI {
 
     private Button monthButton;
 
-    private Date now = new Date();
+    private final Date now = new Date();
 
-    MeetingRepository repository;
+    private final MeetingRepository repository;
+
+    private final MeetingList lastAddedMeetingList;
 
     @Autowired
-    public PlannerUI(MeetingRepository repository) {
+    public PlannerUI(MeetingRepository repository, MeetingList lastAddedMeetingList) {
         this.repository = repository;
-//        this.calendar = new Calendar<>(Meeting.class);
+        this.lastAddedMeetingList = lastAddedMeetingList;
     }
 
     @Override
@@ -81,7 +76,7 @@ public class PlannerUI extends UI {
         addCalendar();
         setAddingMeetingLayout();
         addLastMeetingList();
-        addDummyEvents();
+        addEventsFromDatabaseToCalendar();
     }
 
     private void setRootLayout() {
@@ -232,23 +227,15 @@ public class PlannerUI extends UI {
     }
 
     private void addLastMeetingList() {
-        Label lastMeetingHeader = new Label("Recently added meetings to the database:");
+        Label lastMeetingHeader = new Label("Recently added meetings:");
         lastMeetingHeader.addStyleName(ValoTheme.LABEL_COLORED);
         lastMeetingHeader.addStyleName(ValoTheme.LABEL_H2);
-        root.addComponents(lastMeetingHeader, lastMeetingList);
+        root.addComponents(lastMeetingHeader, lastAddedMeetingList);
     }
 
-    private void addDummyEvents() {
-//        Date firstEventStart = DateUtils.addMinutes(now, 15);
-//        Date firstEventEnd = DateUtils.addMinutes(firstEventStart, 5);
-//        BasicEvent firstEvent = new BasicEvent("Interview", "My interview",
-//                firstEventStart, firstEventEnd);
+    private void addEventsFromDatabaseToCalendar() {
         List<Meeting> meetingsList = repository.findAll();
-        calendar.addEvent(meetingsList.get(0));
-
-        Meeting rehearsal = meetingsList.get(1);
-//        rehearsal.setAllDay(true);
-        calendar.addEvent(rehearsal);
+        meetingsList.forEach(meeting -> calendar.addEvent(meeting));
     }
 
     private List<Integer> initialMeetingDurationList() {
@@ -262,19 +249,13 @@ public class PlannerUI extends UI {
             String meetingName = meetingNameField.getValue();
             String meetingDescription = meetingDescriptionArea.getValue();
             Date meetingStartDate = meetingStartDateField.getValue();
-//            DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa");
             String meetingRoom = (String) roomChoiceBox.getValue();
             Integer meetingDuration = (Integer) meetingDurationNativeSelect.getValue();
             Date meetingEndDate = DateUtils.addMinutes(meetingStartDate, meetingDuration);
 
             if (validation.validateMeetingName(meetingNameField) && validation.validateMeetingRoom(roomChoiceBox)) {
-
-                List<CalendarEvent> userDateEvents = calendar.getEvents(meetingStartDate,
-                        DateUtils.addMinutes(meetingStartDate, meetingDuration));
-
-                validation.isRoomFree(meetingRoom, meetingStartDate, meetingDuration, userDateEvents);
                 createBasicCalendarEvent();
-                lastMeetingList.save(new Meeting(meetingName, meetingDescription,
+                lastAddedMeetingList.save(new Meeting(meetingName, meetingDescription,
                         meetingStartDate, meetingEndDate, meetingRoom));
                 meetingNameField.clear();
                 meetingDescriptionArea.clear();

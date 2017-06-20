@@ -1,12 +1,10 @@
-package com.losK.frontend;
+package com.losK.view;
 
-import com.losK.backend.MeetingChangeListener;
+import com.losK.service.MeetingListChangeListener;
 import com.losK.model.Meeting;
 import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.data.util.BeanItem;
-import com.vaadin.server.Sizeable;
 import com.vaadin.ui.Alignment;
-import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.themes.ValoTheme;
@@ -24,42 +22,22 @@ public class LastEventLayout extends HorizontalLayout {
 
     private TextField start;
 
-    private TextField end;
-
     private TextField roomName;
 
-    private TextField allDay;
-
-    private TextField styleName;
-
-    public LastEventLayout(TextField caption, TextField description, TextField start, TextField end, TextField roomName, TextField allDay, TextField styleName, Component... children) {
-        super(children);
-        this.caption = caption;
-        this.description = description;
-        this.start = start;
-        this.end = end;
-        this.roomName = roomName;
-        this.allDay = allDay;
-        this.styleName = styleName;
-    }
-
-    public LastEventLayout(Meeting meeting, MeetingChangeListener changeListener) {
+    public LastEventLayout(Meeting meeting, MeetingListChangeListener changeListener) {
         setSpacing(true);
         setDefaultComponentAlignment(Alignment.MIDDLE_RIGHT);
 
         setCaptionTextFieldStyle();
         setDescriptionTextFieldStyle();
         setStartDateTextFieldStyle();
-        end = new TextField();
         setRoomNameTextFieldStyle();
-        allDay = new TextField();
-        styleName = new TextField();
         addMeetingToLastEventGroup(meeting);
         addComponentsToLayout();
         addListener(meeting, changeListener);
     }
 
-    private void addListener(Meeting meeting, MeetingChangeListener changeListener) {
+    private void addListener(Meeting meeting, MeetingListChangeListener changeListener) {
         Arrays.asList(caption, roomName, description).forEach(field ->
                 field.addValueChangeListener(change ->
                         changeListener.eventChange(meeting)));
@@ -75,29 +53,32 @@ public class LastEventLayout extends HorizontalLayout {
         addComponents(caption, start, roomName, description);
     }
 
+    private void setStartDateTextFieldStyle() {
+        start = new TextField();
+        start.setInputPrompt("Start date");
+        start.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
+        start.setWidth(220, Unit.PIXELS);
+    }
+
     private void setRoomNameTextFieldStyle() {
         roomName = new TextField();
+        roomName.setInputPrompt("Room");
         roomName.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
         roomName.setWidth(80, Unit.PIXELS);
         roomName.setReadOnly(true);
     }
 
-    private void setStartDateTextFieldStyle() {
-        start = new TextField();
-        start.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
-        start.setWidth(220, Unit.PIXELS);
+    private void setCaptionTextFieldStyle() {
+        caption = new TextField();
+        caption.setInputPrompt("Name");
+        caption.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
+        caption.setWidth(200, Unit.PIXELS);
     }
 
     private void setDescriptionTextFieldStyle() {
         description = new TextField();
+        description.setInputPrompt("Description");
         description.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
         description.setWidth(500, Unit.PIXELS);
-    }
-
-    private void setCaptionTextFieldStyle() {
-        caption = new TextField();
-        caption.setInputPrompt("Meeting name");
-        caption.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
-        caption.setWidth(200, Unit.PIXELS);
     }
 }

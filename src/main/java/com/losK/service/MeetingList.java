@@ -1,8 +1,8 @@
-package com.losK.backend;
+package com.losK.service;
 
-import com.losK.frontend.LastEventLayout;
 import com.losK.model.Meeting;
 import com.losK.repository.MeetingRepository;
+import com.losK.view.LastEventLayout;
 import com.vaadin.spring.annotation.SpringComponent;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.Notification;
@@ -18,10 +18,14 @@ import java.util.List;
  */
 @UIScope
 @SpringComponent
-public class MeetingList extends VerticalLayout implements MeetingChangeListener {
+public class MeetingList extends VerticalLayout implements MeetingListChangeListener {
+
+    private final MeetingRepository repository;
 
     @Autowired
-    private MeetingRepository repository;
+    public MeetingList(MeetingRepository repository) {
+        this.repository = repository;
+    }
 
     @PostConstruct
     void init() {
@@ -35,9 +39,7 @@ public class MeetingList extends VerticalLayout implements MeetingChangeListener
 
     private void setMeetingList(List<Meeting> meetings) {
         removeAllComponents();
-        meetings.forEach(event -> {
-            addComponent(new LastEventLayout(event, this));
-        });
+        meetings.forEach(event -> addComponent(new LastEventLayout(event, this)));
     }
 
     public void save(Meeting meeting) {

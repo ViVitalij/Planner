@@ -36,7 +36,7 @@ public class PlannerApplication {
         };
     }
 
-    private List<Meeting> initMeetingsList(){
+    private List<Meeting> initMeetingsList() {
         List<Meeting> meetingsList = new ArrayList<>();
         Meeting interview = getFirstMeeting();
         Meeting rehearsal = getSecondMeeting();
@@ -45,17 +45,16 @@ public class PlannerApplication {
         return meetingsList;
     }
 
+    private Meeting getFirstMeeting() {
+        Date firstEventStart = DateUtils.addMinutes(new Date(), 15);
+        Date firstEventEnd = DateUtils.addMinutes(firstEventStart, 5);
+        return new Meeting("Interview", "My interview", firstEventStart, firstEventEnd, "Green");
+    }
+
     private Meeting getSecondMeeting() {
         Date secondEventStart = DateUtils.addDays(new Date(), 6);
         Date secondEventEnd = DateUtils.addDays(secondEventStart, 4);
         return new Meeting("Sepia Ensemble Project", "Rehearsals",
                 secondEventStart, secondEventEnd, "Red");
     }
-
-    private Meeting getFirstMeeting() {
-        Date firstEventStart = DateUtils.addMinutes(new Date(), 15);
-        Date firstEventEnd = DateUtils.addMinutes(firstEventStart, 5);
-        return new Meeting("Interview", "MyInterview", firstEventStart, firstEventEnd, "Green");
-    }
-
 }

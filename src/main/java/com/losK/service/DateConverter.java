@@ -1,4 +1,4 @@
-package com.losK.backend;
+package com.losK.service;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
