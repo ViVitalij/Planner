@@ -1,8 +1,8 @@
-package com.losK.backend;
+package com.losK.service;
 
-import com.losK.frontend.LastEventLayout;
 import com.losK.model.Meeting;
 import com.losK.repository.MeetingRepository;
+import com.losK.view.LastEventLayout;
 import com.vaadin.spring.annotation.SpringComponent;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.Notification;
@@ -18,11 +18,14 @@ import java.util.List;
  */
 @UIScope
 @SpringComponent
-public class MeetingList extends VerticalLayout implements MeetingChangeListener {
+public class MeetingList extends VerticalLayout implements MeetingListChangeListener {
+
+    private final MeetingRepository repository;
 
     @Autowired
-    MeetingRepository repository;
-    private List<Meeting> meetings;
+    public MeetingList(MeetingRepository repository) {
+        this.repository = repository;
+    }
 
     @PostConstruct
     void init() {
@@ -35,17 +38,15 @@ public class MeetingList extends VerticalLayout implements MeetingChangeListener
     }
 
     private void setMeetingList(List<Meeting> meetings) {
-        this.meetings = meetings;
         removeAllComponents();
-        meetings.forEach(event -> {
-            addComponent(new LastEventLayout(event, this));
-        });
+        meetings.forEach(event -> addComponent(new LastEventLayout(event, this)));
     }
 
     public void save(Meeting meeting) {
         try {
             repository.save(meeting);
-        } catch (ConstraintViolationException exception) {
+        } catch (ConstraintViolationException e) {
+            e.printStackTrace();
             Notification.show("At least 3 characters (max.50)", Notification.Type.ERROR_MESSAGE);
         }
         update();
